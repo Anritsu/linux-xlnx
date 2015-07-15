@@ -195,12 +195,22 @@ static int xusbps_dr_of_probe(struct platform_device *ofdev)
 	if (reset_gpio >= 0) {
 		ret = devm_gpio_request_one(&ofdev->dev, reset_gpio,
 					    GPIOF_OUT_INIT_HIGH, "usb_reset");
-		if (ret) {
-			dev_err(&ofdev->dev, "Please specify usb reset pin\n");
-			return ret;
-		}
+
+        // DCM Sleepy has two USB devices but only one USB reset signal.
+        // This probe function runs once for each device and will fail
+        // on the second pass because the first device "owns" the reset signal,
+        // so this test is commented out.
+//		if (ret) {
+//			dev_err(&ofdev->dev, "Please specify usb reset pin\n");
+//			return ret;
+//		}
+        // DCM The Sleepy USB reset is active high and is high on POR so
+        // setting it low then high is backwards for the Sleepy hardware.
+        // Also we don't want to reset the USB controllers twice, so just
+        // set it low here. Possible problem - a soft reboot will not reset
+        // the USB controllers
 		gpio_set_value(reset_gpio, 0);
-		gpio_set_value(reset_gpio, 1);
+        //gpio_set_value(reset_gpio, 1);
 	}
 
 	dev_data = get_dr_mode_data(np);
