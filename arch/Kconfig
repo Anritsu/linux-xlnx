@@ -531,3 +531,5 @@ config COMPAT_OLD_SIGACTION
 	bool
 
 source "kernel/gcov/Kconfig"
+
+CHANGES
