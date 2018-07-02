@@ -346,6 +346,44 @@ struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
 }
 EXPORT_SYMBOL(get_phy_device);
 
+
+#define MII_CSCR2_ADDR 0x14
+#define MII_100T_CLK_SRC_BIT 5
+
+int using_100base_local_clock(struct phy_device *phydev) {
+	int phy_reg;
+	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MII_CSCR2_ADDR);
+	return (phy_reg & (1 << MII_100T_CLK_SRC_BIT)) >> MII_100T_CLK_SRC_BIT;
+}
+
+void set_100base_recovered_clock(struct phy_device *phydev) {
+	int phy_reg;
+	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MII_CSCR2_ADDR);
+	phy_reg &= ~(1 << MII_100T_CLK_SRC_BIT);
+	mdiobus_write(phydev->bus, phydev->addr, MII_CSCR2_ADDR, phy_reg);
+
+	// The above bit does not take effect until a soft reset is performed
+	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MII_BMCR);
+	phy_reg |= BMCR_RESET;
+	mdiobus_write(phydev->bus, phydev->addr, MII_BMCR, phy_reg);
+}
+
+void force_100base_recovered_clock(struct phy_device *phydev) {
+	int is_local_clock = using_100base_local_clock(phydev);
+
+	pr_info("phy_device: 100 BASE-T Transmitter Clock Source is %s\n",
+			is_local_clock ? "local clock" : "recovered clock");
+
+	if (is_local_clock) {
+		pr_info("phy_device: switching to recovered clock instead...\n");
+		set_100base_recovered_clock(phydev);
+
+		is_local_clock = using_100base_local_clock(phydev);
+		pr_info("phy_device: 100 BASE-T Transmitter Clock Source is %s\n",
+				is_local_clock ? "local clock" : "recovered clock");
+	}
+}
+
 /**
  * phy_device_register - Register the phy device on the MDIO bus
  * @phydev: phy_device structure to be added to the MDIO bus
@@ -368,6 +406,9 @@ int phy_device_register(struct phy_device *phydev)
 		pr_err("phy %d failed to register\n", phydev->addr);
 		goto out;
 	}
+
+	/* Force recovered 100 Base-T clock if it is not being used */
+	force_100base_recovered_clock(phydev);
 
 	return 0;
 
