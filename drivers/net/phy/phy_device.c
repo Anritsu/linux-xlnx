@@ -349,6 +349,10 @@ EXPORT_SYMBOL(get_phy_device);
 
 #define MII_CSCR2_ADDR 0x14
 #define MII_100T_CLK_SRC_BIT 5
+#define PAGE_ADDRESS_REG 0x16
+#define MAC_CTRL_REG1 0x10
+#define MAC_CTRL_REG1_RCLK_FSEL_BIT 12
+#define MAC_CTRL_REG1_CLK125_SOURCESEL_BIT 0
 
 int using_100base_local_clock(struct phy_device *phydev) {
 	int phy_reg;
@@ -362,6 +366,19 @@ void set_100base_recovered_clock(struct phy_device *phydev) {
 	phy_reg &= ~(1 << MII_100T_CLK_SRC_BIT);
 	mdiobus_write(phydev->bus, phydev->addr, MII_CSCR2_ADDR, phy_reg);
 
+    /* Output RCLK to CLK125.
+    */
+    /* Set the page. */
+    mdiobus_write(phydev->bus, phydev->addr, PAGE_ADDRESS_REG, 2);
+    /* Set RCLK out to 125MHz.
+    * Set RCLK to go to CLK125 output.
+    */
+   	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MAC_CTRL_REG1);
+    phy_reg |= (1 << MAC_CTRL_REG1_CLK125_SOURCESEL_BIT);
+    mdiobus_write(phydev->bus, phydev->addr, MAC_CTRL_REG1, phy_reg);
+    /* Set the page back. */
+    mdiobus_write(phydev->bus, phydev->addr, PAGE_ADDRESS_REG, 0);
+        
 	// The above bit does not take effect until a soft reset is performed
 	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MII_BMCR);
 	phy_reg |= BMCR_RESET;
