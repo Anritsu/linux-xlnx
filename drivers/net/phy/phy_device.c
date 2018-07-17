@@ -371,20 +371,20 @@ void set_100base_recovered_clock(struct phy_device *phydev) {
     /* Set the page. */
     mdiobus_write(phydev->bus, phydev->addr, PAGE_ADDRESS_REG, 2);
     phy_reg = mdiobus_read(phydev->bus, phydev->addr, PAGE_ADDRESS_REG);
-    pr_info("phy_device: PAGE_ADDRESS_REG before is %d\n", phy_reg);
+    pr_info("phy_device: PAGE_ADDRESS_REG before is 0x%08x\n", phy_reg);
 
     /* Set RCLK to go to CLK125 output.*/
    	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MAC_CTRL_REG1);
-    pr_info("phy_device: MAC_CTRL_REG1 before is %d\n", phy_reg);
+    pr_info("phy_device: MAC_CTRL_REG1 before is 0x%08x\n", phy_reg);
     phy_reg |= (1 << MAC_CTRL_REG1_CLK125_SOURCESEL_BIT);
     mdiobus_write(phydev->bus, phydev->addr, MAC_CTRL_REG1, phy_reg);
    	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MAC_CTRL_REG1);
-    pr_info("phy_device: MAC_CTRL_REG1 after is %d\n", phy_reg);
+    pr_info("phy_device: MAC_CTRL_REG1 after is 0x%08x\n", phy_reg);
     
     /* Set the page back. */
     mdiobus_write(phydev->bus, phydev->addr, PAGE_ADDRESS_REG, 0);
     phy_reg = mdiobus_read(phydev->bus, phydev->addr, PAGE_ADDRESS_REG);
-    pr_info("phy_device: PAGE_ADDRESS_REG after is %d\n", phy_reg);
+    pr_info("phy_device: PAGE_ADDRESS_REG after is 0x%08x\n", phy_reg);
        
 	// The above bit does not take effect until a soft reset is performed
 	phy_reg = mdiobus_read(phydev->bus, phydev->addr, MII_BMCR);
